@@ -1,0 +1,25 @@
+{
+  "name": "edessa",
+  "version": "0.0.1",
+  "description": "a highly opinionated wrapper for async.waterfall",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mhoc/edessa.git"
+  },
+  "author": "Mike Hockerman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mhoc/edessa/issues"
+  },
+  "homepage": "https://github.com/mhoc/edessa#readme",
+  "dependencies": {
+    "async": "^2.0.1",
+    "aws-sdk": "^2.6.3",
+    "dynamodb-marshaler": "^2.0.0",
+    "lodash": "^4.16.1"
+  }
+}
