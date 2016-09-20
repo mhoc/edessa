@@ -79,7 +79,6 @@ var GetDynamoConfig = function(options) {
     requestItemsObj[table] = {
       Keys: getKeys
     }
-    console.log(requestItemsObj)
     DynamoDB.batchGetItem({
       RequestItems: requestItemsObj
     }, function(err, resp) {
