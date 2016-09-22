@@ -19,6 +19,7 @@ module.exports = function(options) {
 }
 
 var SetDefaultConfig = function(backend, config) {
+
   switch (backend) {
     case 'dynamodb':
       if (!config.table) config.table = 'Config'
@@ -63,8 +64,11 @@ var GetDynamoConfig = function(options) {
     if (!state.config || state.config.length === 0) {
       return NoConfigRequested(state, done)
     }
+    var stage = state.stage || options.defaultStage
+    if (!stage) {
+      return done("no edessa stage set: this will cause the dynamodb query to fail")
+    }
     var keys = state.config
-    var stage = state.stage
     var fieldKey = options.config.dynamodb.fields[0]
     var fieldStage = options.config.dynamodb.fields[1]
     var fieldValue = options.config.dynamodb.fields[2]
