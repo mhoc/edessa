@@ -1,7 +1,9 @@
 var async = require('async')
 var aws = require('aws-sdk')
 var flattenDDB = require('dynamodb-marshaler').unmarshalItem
+var fs = require('fs')
 var _ = require('lodash')
+var yaml = require('js-yaml')
 
 var DynamoDB = new aws.DynamoDB()
 
@@ -14,6 +16,14 @@ module.exports = function(options) {
     var backendConfig = config[backend]
     if (!backendConfig) backendConfig = {}
     config[backend] = SetDefaultConfig(backend, backendConfig)
+  }
+  var configFile = options.configFile
+  if (configFile) {
+    if (_.includes(configFile, 'json')) {
+      options.configFile = require(configFile)
+    } else if (_.includes(configFile, 'yaml') || _.includes(configFile, 'yml')) {
+      options.configFile = yaml.safeLoad(fs.readFileSync(configFile, 'utf8'))
+    }
   }
   return Edessa(options)
 }
@@ -32,7 +42,8 @@ var Edessa = function(options) {
   return function(initObj, components, done) {
     var waterfallBody = [
       InitState(initObj),
-      InitConfig(options)
+      InitConfig(options),
+      OverrideLocalSettings(options),
     ]
     waterfallBody.push.apply(waterfallBody, components)
     async.waterfall(waterfallBody, done)
@@ -101,5 +112,14 @@ var GetDynamoConfig = function(options) {
       delete state['config']
       done(null, state)
     })
+  }
+}
+
+var OverrideLocalSettings = function(options) {
+  return function(state, done) {
+    if (options.configFile) {
+      state = _.assign(state, options.configFile)
+    }
+    return done(null, state)
   }
 }

@@ -2,57 +2,10 @@
 
 A highly opinionated wrapper for `async.waterfall`, handling initialization, configuration retrieval from a database, and executing all the components of the waterfall.
 
-# Background
+# What Its Good For
 
-`async.waterfall` makes a good backbone for something like a Lambda function or the body of a recurring job with lots of asynchronous calls. However, managing the parameters that are passed between components of a waterfall, especially when you are moving things around during development, can be confusing. 
-
-This lead to the personal adoption of a pattern that looks something like:
-
-```
-async.waterfall([
-  component1({
-    stage: 'prod',
-    userId: '12345',
-    otherParam: 12,
-  }),
-  component2,
-  component3,
-])
-
-const component1 = (state) => {
-  return (done) => {
-    done(null, state)
-  }
-}
-
-const component2 = (state, done) => {
-  // etc  
-}
-```
-
-Essentially, using a `state` variable to store anything related to the execution context of the waterfall. 
-
-# Configuration
-
-Next problem: pulling stage-specific configuration parameters from a database or other source. I already started this off by saying it was highly-opinionated, so lets keep that train rolling.
-
-Wouldn't it be cool if you could do:
-
-```
-async.waterfall([
-  state({
-    stage: 'production',
-  }),
-  config([
-    'MainDatabaseUrl'
-  ]),
-  nextComponent,
-])
-
-const nextComponent = (done) => {
-  assert(nextComponent.MainDatabaseUrl === 'mydburl') // +1 
-}
-```
+- Storing and retrieving configuration parameters in DynamoDB (or other backends)
+- Injecting those and other global state into some other function using an Async.Waterfall
 
 # Usage
 
@@ -64,14 +17,15 @@ const waterfall = require('edessa')({
       table: 'Config',
       fields: [ 'key', 'stage', 'value' ],
     }
-  }
-
+  },
+  configFile: 'myconfig.yaml',
 })
 
 waterfall({
   config: [
     'mainDatabaseUrl',
   ],
+  configFile: 'settings.dev.yaml',
   stage: 'production',
   userId: '12345',
 }, [
@@ -79,7 +33,7 @@ waterfall({
   component2,
   component3,
 ], (err, result) => {
-  
+  ...
 })
 
 const component1 = (state, done) => {
@@ -102,12 +56,16 @@ const component1 = (state, done) => {
 - `config.dynamodb.fields`
  - An ordered list of the dynamodb field names (see DynamoDB below)
  - Optional: defaults to `[ 'key', 'stage', 'value' ]`
+- `configFile`
+ - A string corresponding to a `.json` or `.yaml` file storing configs. 
+ - Any config variables provided in this file will override anything pulled from the config backend.
 
 # Special Behavior
 
 - `state.stage`
- - A special variable in the object you provide which will be used to determine which stage of each configuration variable to return. 
- - If it is not provided, we default to the `defaultStage` provided in the library config, or `"all"` if that is not provided.
+ - Special state variable
+ - Determines the stage of each configuration variable to read.
+ - If this is not provided, we default to `defaultStage` which is provided in library config, or `"all"`. 
 
 # DynamoDB
 

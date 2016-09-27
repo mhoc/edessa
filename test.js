@@ -1,5 +1,6 @@
 var waterfall = require('./index.js')({
-  config: { backend: 'dynamodb' }
+  config: { backend: 'dynamodb' },
+  // configFile: './mysettings.yml',
 })
 
 waterfall({
@@ -7,6 +8,7 @@ waterfall({
     'meteorAppUrl',
     'meteorMongoUrl',
   ],
+  Hello: 'Nope',
   stage: 'staging',
 }, [
   (state, done) => {
