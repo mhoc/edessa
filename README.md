@@ -1,33 +1,59 @@
 # EDESSA
 
-A highly opinionated wrapper for `async.waterfall`, handling initialization, configuration retrieval from a database, and executing all the components of the waterfall.
+A highly opinionated wrapper around `async.waterfall`.
 
-# What Its Good For
+- Pass some external state into the first item in the waterfall
+- Retrieve configuration parameters from DynamoDB
+- Execute the waterfall
 
-- Storing and retrieving configuration parameters in DynamoDB (or other backends)
-- Injecting those and other global state into some other function using an Async.Waterfall
+# Setup
+
+```js
+const edessa = require('edessa')({
+
+  // options concerning the config store go here
+  config: {
+
+    // which backend to use. currently, only dynamodb is supported
+    backend: 'dynamodb',
+
+    // how the dynamodb table is set up.
+    dynamodb: {
+      // which table you are using. defaults to "Config"
+      table: 'Config',
+      // the names of the three columns edessa expects
+      // what's shown is the defaults
+      field: [ 'key', 'stage', 'value' ]
+    }
+  },
+
+  // the location of the personal config file.
+  // if this file exists and is provided, its keys will override the
+  // values retrieved from the config backend
+  configFile: 'personalconfig.yaml',
+
+  // if a key requested is missing, this will cause edessa to pipe
+  // an error through to the error condition of the waterfall. this defaults
+  // to true.
+  errOnMissing: true,
+
+})
+```
 
 # Usage
 
-```
-const waterfall = require('edessa')({
-  config: {
-    backend: 'dynamodb'
-    dynamodb: {
-      table: 'Config',
-      fields: [ 'key', 'stage', 'value' ],
-    }
-  },
-  configFile: 'myconfig.yaml',
-})
-
-waterfall({
+```js
+edessa({
   config: [
     'mainDatabaseUrl',
   ],
-  configFile: 'settings.dev.yaml',
-  stage: 'production',
   userId: '12345',
+
+  // this variables decides which config parameters to get from the config
+  // backend. if it is not provided, it defaults to process.env.NODE_ENV.
+  // you can always override this.
+  stage: process.env.NODE_ENV,
+
 }, [
   component1,
   component2,
@@ -43,29 +69,6 @@ const component1 = (state, done) => {
   // state.userId
 }
 ```
-
-# Options
-
-- `config.backend` 
- - Required in order to fetch config variables
- - Select where your configuration parameters are stored. 
- - Options: `dynamodb`
-- `config.dynamodb.table`
- - The dynamodb table where configuration parameters are stored
- - Optional: defaults to `Config`
-- `config.dynamodb.fields`
- - An ordered list of the dynamodb field names (see DynamoDB below)
- - Optional: defaults to `[ 'key', 'stage', 'value' ]`
-- `configFile`
- - A string corresponding to a `.json` or `.yaml` file storing configs. 
- - Any config variables provided in this file will override anything pulled from the config backend.
-
-# Special Behavior
-
-- `state.stage`
- - Special state variable
- - Determines the stage of each configuration variable to read.
- - If this is not provided, we default to `defaultStage` which is provided in library config, or `"all"`. 
 
 # DynamoDB
 
@@ -85,4 +88,12 @@ The read/write capacity of this table is totally up to you and might be somethin
 
 ## AWS Authentication
 
-Authentication currently must be provided by the environment. 
+Authentication currently must be provided by the environment.
+
+# Future Improvements
+
+- Cascading Stages
+ - The ability to explicitly state priority levels for stages.
+ - So something like: [ "dev", "dev-mike", "$configfile" ]
+ - Values in config file override values from backend in stage dev-mike, which override values in dev
+- etcd support
