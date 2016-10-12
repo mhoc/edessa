@@ -67,6 +67,7 @@ var InitConfig = function(options) {
   switch (options.config.backend) {
     case 'dynamo': return GetDynamoConfig(options)
     case 'dynamodb': return GetDynamoConfig(options)
+    default: return ErrorInWaterfall("edessa: the requested config backend was not recognized: " + options.config.backend)
   }
   return NoConfigRequested
 }
@@ -74,6 +75,12 @@ var InitConfig = function(options) {
 var NoConfigRequested = function(state, done) {
   delete state['config']
   return done(null, state)
+}
+
+var ErrorInWaterfall = function(err) {
+  return function(state, done) {
+    done(err)
+  }
 }
 
 var GetDynamoConfig = function(options) {

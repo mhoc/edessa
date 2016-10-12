@@ -1,7 +1,7 @@
 var waterfall = require('./index.js')({
-  config: { backend: 'dynamodb' },
+  config: { backend: 'dynamodbb' },
   // configFile: './mysettings.yml',
-  errOnMissing: true,
+  // errOnMissing: true,
 })
 
 waterfall({
