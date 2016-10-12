@@ -55,6 +55,9 @@ var Edessa = function(options) {
 
 var InitState = function(initObj) {
   return function(done) {
+    if (!initObj.stage) {
+      initObj.stage = process.env.NODE_ENV
+    }
     return done(null, initObj)
   }
 }
