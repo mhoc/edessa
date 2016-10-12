@@ -25,6 +25,10 @@ module.exports = function(options) {
       options.configFile = yaml.safeLoad(fs.readFileSync(configFile, 'utf8'))
     }
   }
+  var errOnMissing = options.errOnMissing
+  if (!_.isBoolean(errOnMissing)) {
+    options.errOnMissing = true
+  }
   return Edessa(options)
 }
 
@@ -56,11 +60,10 @@ var InitState = function(initObj) {
 }
 
 var InitConfig = function(options) {
-  if (!options.config || !_.isArray(options.config)) return NoConfigRequested
-  if (options.config.length === 0) return NoConfigRequested
+  if (!options.config) return NoConfigRequested
   switch (options.config.backend) {
-    case 'dynamodb': return GetDynamoConfig(options)
     case 'dynamo': return GetDynamoConfig(options)
+    case 'dynamodb': return GetDynamoConfig(options)
   }
   return NoConfigRequested
 }
@@ -108,6 +111,17 @@ var GetDynamoConfig = function(options) {
           accum[curr[fieldKey]] = curr[fieldValue]
           return accum
         }, {})
+      if (options.errOnMissing) {
+        const diff = _.xor(Object.keys(configObj), keys)
+        if (diff.length > 0) {
+          const errMsg = _.reduce(diff, (acc, curr, i) => {
+            if (i !== 0) acc += ', '
+            acc += "'" + curr + "'"
+            return acc
+          }, 'edessa: some of the config keys requested were not found in dynamodb: ')
+          return done(errMsg, state)
+        }
+      }
       state = Object.assign(state, configObj)
       delete state['config']
       done(null, state)
