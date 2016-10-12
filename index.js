@@ -29,7 +29,6 @@ module.exports = function(options) {
 }
 
 var SetDefaultConfig = function(backend, config) {
-
   switch (backend) {
     case 'dynamodb':
       if (!config.table) config.table = 'Config'
@@ -57,10 +56,11 @@ var InitState = function(initObj) {
 }
 
 var InitConfig = function(options) {
-  if (!options.config) return NoConfigRequested
+  if (!options.config || !_.isArray(options.config)) return NoConfigRequested
+  if (options.config.length === 0) return NoConfigRequested
   switch (options.config.backend) {
-    case 'dynamodb':
-      return GetDynamoConfig(options)
+    case 'dynamodb': return GetDynamoConfig(options)
+    case 'dynamo': return GetDynamoConfig(options)
   }
   return NoConfigRequested
 }
